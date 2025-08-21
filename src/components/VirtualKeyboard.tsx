@@ -4,6 +4,23 @@ interface VirtualKeyboardProps {
   currentChar: string;
 }
 
+const getFingerPosition = (finger: string) => {
+  const positions = {
+    'left-pinky': { left: -0.42268, top: 32.4 },
+    'left-ring': { left: 15.57732, top: 13.4 },
+    'left-middle': { left: 36.57732, top: 7.4 },
+    'left-index': { left: 52.57732, top: 12.4 },
+    'left-thumb': { left: 76.57732, top: 50.4 },
+    // Right hand positions - will be updated with your CSS values
+    'right-index': { left: 100, top: 119 }, // Placeholder - will be updated
+    'right-middle': { left: 168, top: 99 }, // Placeholder - will be updated
+    'right-ring': { left: 259, top: 122 }, // Placeholder - will be updated
+    'right-pinky': { left: 321, top: 196 }, // Placeholder - will be updated
+    'right-thumb': { left: 200, top: 289 }, // Placeholder - will be updated
+  };
+  return positions[finger as keyof typeof positions];
+};
+
 const getFingerForKey = (key: string): string => {
   const fingerMap: { [key: string]: string } = {
     // Left hand
@@ -191,16 +208,30 @@ const fingerColors = {
       <div className="flex items-center justify-center space-x-8">
         {/* Left Hand */}
         <div className="flex flex-col items-center space-y-2">
-          <div className={`border-2 rounded-lg p-2 w-20 h-24 flex items-center justify-center transition-all ${
+          <div className={`border-2 rounded-lg p-4 w-32 h-40 flex items-center justify-center transition-all relative ${
             currentFinger.startsWith('left') ? 'bg-green-200 border-green-400' : 'bg-red-50 border-red-200'
           }`}>
-            <img 
-              src="/src/assets/left.png" 
-              alt="Left Hand" 
-              className={`w-16 h-20 object-contain transition-all ${
-                currentFinger.startsWith('left') ? 'brightness-110 saturate-150' : 'opacity-80'
-              }`}
-            />
+            <div className="relative">
+              <img 
+                src="/src/assets/left.png" 
+                alt="Left Hand" 
+                className={`w-24 h-32 object-contain transition-all ${
+                  currentFinger.startsWith('left') ? 'brightness-110 saturate-150' : 'opacity-80'
+                }`}
+              />
+              {/* Finger highlighting overlay */}
+              {currentFinger.startsWith('left') && (
+                <div
+                  className="absolute bg-green-500 rounded-full animate-pulse shadow-lg"
+                  style={{
+                    left: `${getFingerPosition(currentFinger)?.left || 0}px`,
+                    top: `${getFingerPosition(currentFinger)?.top || 0}px`,
+                    width: '16px',
+                    height: '16px',
+                  }}
+                />
+              )}
+            </div>
           </div>
           <div className="text-xs text-gray-600">Left Hand</div>
         </div>
@@ -216,20 +247,46 @@ const fingerColors = {
 
         {/* Right Hand */}
         <div className="flex flex-col items-center space-y-2">
-          <div className={`border-2 rounded-lg p-2 w-20 h-24 flex items-center justify-center transition-all ${
+          <div className={`border-2 rounded-lg p-4 w-32 h-40 flex items-center justify-center transition-all relative ${
             currentFinger.startsWith('right') ? 'bg-green-200 border-green-400' : 'bg-blue-50 border-blue-200'
           }`}>
-            <img 
-              src="/src/assets/right.png" 
-              alt="Right Hand" 
-              className={`w-16 h-20 object-contain transition-all ${
-                currentFinger.startsWith('right') ? 'brightness-110 saturate-150' : 'opacity-80'
-              }`}
-            />
+            <div className="relative">
+              <img 
+                src="/src/assets/right.png" 
+                alt="Right Hand" 
+                className={`w-24 h-32 object-contain transition-all ${
+                  currentFinger.startsWith('right') ? 'brightness-110 saturate-150' : 'opacity-80'
+                }`}
+              />
+              {/* Finger highlighting overlay for right hand */}
+              {currentFinger.startsWith('right') && (
+                <div
+                  className="absolute bg-green-500 rounded-full animate-pulse shadow-lg"
+                  style={{
+                    left: `${getFingerPosition(currentFinger)?.left || 0}px`,
+                    top: `${getFingerPosition(currentFinger)?.top || 0}px`,
+                    width: '16px',
+                    height: '16px',
+                  }}
+                />
+              )}
+            </div>
           </div>
           <div className="text-xs text-gray-600">Right Hand</div>
         </div>
       </div>
+
+      {/* Current Finger Indicator */}
+      {currentChar && (
+        <div className="mt-4 text-center">
+          <div className="inline-flex items-center space-x-2 bg-blue-100 px-4 py-2 rounded-lg">
+            <span className="text-sm font-medium text-blue-800">
+              Use your {currentFinger.replace('-', ' ').replace('left', 'left hand').replace('right', 'right hand')} 
+              {currentChar === ' ' ? ' for SPACE' : ` to type "${currentChar}"`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Finger Guide */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-6 gap-4 text-xs">
