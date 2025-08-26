@@ -289,9 +289,9 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
 
         {/* Stats Display - Split into two parts */}
         <div className="flex bg-gray-50 rounded-lg mb-4 overflow-hidden">
-          {/* Left side - 75% width - Stats */}
-          <div className="flex-1 px-6 py-3" style={{ width: '75%' }}>
-            <div className="flex items-center justify-between">
+          {/* Left side - 60% width - Stats */}
+          <div className="flex-1 px-6 py-3" style={{ width: '60%' }}>
+            <div className="flex items-center justify-between space-x-4">
               <div className="flex items-center space-x-2">
                 <Zap className="h-4 w-4 text-blue-600" />
                 <span className="text-xs text-gray-500">Speed:</span>
@@ -314,15 +314,31 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
                    startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
                 </span>
               </div>
+              {/* Remaining time display in first part */}
+              {selectedTimeout && remainingTime !== null && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500">Remaining:</span>
+                  <span className={`text-xs font-medium ${
+                    remainingTime <= 30 ? 'text-red-600' : 
+                    remainingTime <= 60 ? 'text-orange-600' : 'text-gray-600'
+                  }`}>
+                    {remainingTime >= 3600 
+                      ? `${Math.floor(remainingTime / 3600)}:${Math.floor((remainingTime % 3600) / 60).toString().padStart(2, '0')}:${(remainingTime % 60).toString().padStart(2, '0')}`
+                      : `${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')}`
+                    }
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Right side - 25% width - Timeout controls */}
-          <div className="border-l border-gray-200 px-4 py-3" style={{ width: '25%' }}>
-            <div className="flex items-center justify-between space-x-2">
+          {/* Right side - 40% width - Timeout controls */}
+          <div className="border-l border-gray-200 px-4 py-3" style={{ width: '40%' }}>
+            <div className="flex items-center justify-between space-x-3 h-full">
+              <div className="text-xs text-gray-600 font-medium">Practice time</div>
               {/* Timeout buttons */}
               <div className="flex space-x-1">
-                {[5, 10, 15, 40, 60].map((minutes) => (
+                {[5, 10, 15].map((minutes) => (
                   <button
                     key={minutes}
                     onClick={() => handleTimeoutSelect(minutes)}
@@ -335,7 +351,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
                         : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                     }`}
                   >
-                    {minutes >= 60 ? `${minutes/60}H` : `${minutes}M`}
+                    {minutes}M
                   </button>
                 ))}
               </div>
@@ -349,30 +365,6 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
                 <span>Reset</span>
               </button>
             </div>
-            
-            {/* Remaining time display */}
-            {selectedTimeout && remainingTime !== null && (
-              <div className="mt-2 text-center">
-                <div className={`text-xs font-medium ${
-                  remainingTime <= 30 ? 'text-red-600' : 
-                  remainingTime <= 60 ? 'text-orange-600' : 'text-gray-600'
-                }`}>
-                  {remainingTime >= 3600 
-                    ? `${Math.floor(remainingTime / 3600)}:${Math.floor((remainingTime % 3600) / 60).toString().padStart(2, '0')}:${(remainingTime % 60).toString().padStart(2, '0')} left`
-                    : `${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} left`
-                  }
-                </div>
-              </div>
-            )}
-            
-            {/* Level-based practice time recommendation */}
-            {!startTime && (
-              <div className="mt-2 text-center">
-                <div className="text-xs text-gray-500">
-                  {getRecommendedPracticeTime()}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
