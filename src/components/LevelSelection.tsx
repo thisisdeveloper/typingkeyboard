@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play, Star, Award, Zap, CheckCircle, Clock } from 'lucide-react';
 import { UserProgress } from '../utils/storage';
 
@@ -50,8 +51,14 @@ const levels = {
 };
 
 const LevelSelection: React.FC<LevelSelectionProps> = ({ onLevelSelect, progress }) => {
+  const navigate = useNavigate();
+  
   const getLessonStatus = (level: string, lessonIndex: number) => {
     return progress.lessonProgress[level]?.[lessonIndex];
+  };
+
+  const handleLessonClick = (level: 'beginner' | 'intermediate' | 'advanced', lesson: number) => {
+    onLevelSelect(level, lesson);
   };
 
   return (
@@ -88,7 +95,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({ onLevelSelect, progress
                   return (
                     <button
                     key={index}
-                    onClick={() => onLevelSelect(levelKey, index)}
+                    onClick={() => handleLessonClick(levelKey, index)}
                     className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all group ${
                       isCompleted 
                         ? `border-green-300 bg-green-50 hover:bg-green-100`

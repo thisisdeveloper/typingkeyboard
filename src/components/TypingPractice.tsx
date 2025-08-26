@@ -202,21 +202,33 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
           <div className="flex items-center space-x-6 bg-white/60 backdrop-blur-sm rounded-lg px-4 py-2">
             <div className="flex items-center space-x-2">
               <Zap className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">{wpm} WPM</span>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">Speed</div>
+                <div className="text-sm font-medium">{wpm} WPM</div>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">{Math.round((userInput.length / text.length) * 100)}%</span>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">Progress</div>
+                <div className="text-sm font-medium">{Math.round((userInput.length / text.length) * 100)}%</div>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Target className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium">{accuracy}%</span>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">Accuracy</div>
+                <div className="text-sm font-medium">{accuracy}%</div>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium">
-                {isCompleted && finalTime ? Math.round(finalTime) : 
-                 startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
-              </span>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">Time</div>
+                <div className="text-sm font-medium">
+                  {isCompleted && finalTime ? Math.round(finalTime) : 
+                   startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
+                </div>
+              </div>
             </div>
           </div>
 
@@ -232,18 +244,13 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
 
       {/* Typing Area */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 capitalize">
-            {level} - Lesson {lesson + 1}
-          </h3>
-          {lessonStatus.attempts > 0 && (
-            <div className="text-sm text-gray-600 space-x-4">
-              <span>Previous Best: {lessonStatus.bestWpm} WPM</span>
-              <span>{lessonStatus.bestAccuracy}% Accuracy</span>
-              <span>{lessonStatus.attempts} attempts</span>
-            </div>
-          )}
-        </div>
+        {lessonStatus.attempts > 0 && (
+          <div className="mb-6 text-sm text-gray-600 space-x-4">
+            <span>Previous Best: {lessonStatus.bestWpm} WPM</span>
+            <span>{lessonStatus.bestAccuracy}% Accuracy</span>
+            <span>{lessonStatus.attempts} attempts</span>
+          </div>
+        )}
 
         <div className="text-2xl leading-relaxed font-mono bg-gray-50 p-6 rounded-xl mb-4 border">
           {text.split('').map((char, index) => (
