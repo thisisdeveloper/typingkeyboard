@@ -11,12 +11,12 @@ const getFingerPosition = (finger: string) => {
     'left-middle': { left: 36.57732, top: 7.4 },
     'left-index': { left: 52.57732, top: 12.4 },
     'left-thumb': { left: 76.57732, top: 50.4 },
-    // Right hand positions - will be updated with your CSS values
-    'right-index': { left: 100, top: 119 }, // Placeholder - will be updated
-    'right-middle': { left: 168, top: 99 }, // Placeholder - will be updated
-    'right-ring': { left: 259, top: 122 }, // Placeholder - will be updated
-    'right-pinky': { left: 321, top: 196 }, // Placeholder - will be updated
-    'right-thumb': { left: 200, top: 289 }, // Placeholder - will be updated
+    // Right hand positions from CSS inspection
+    'right-index': { left: 23, top: 11 }, // Pointer finger
+    'right-middle': { left: 39, top: 6 }, // Middle finger
+    'right-ring': { left: 60, top: 13 }, // Ring finger
+    'right-pinky': { left: 77, top: 29 }, // Little finger
+    'right-thumb': { left: -2, top: 49 }, // Thumb
   };
   return positions[finger as keyof typeof positions];
 };
@@ -37,7 +37,7 @@ const getFingerForKey = (key: string): string => {
     '6': 'right-index', '7': 'right-index', '8': 'right-middle', '9': 'right-ring', '0': 'right-pinky',
     '-': 'right-pinky', '=': 'right-pinky', '[': 'right-pinky', ']': 'right-pinky', '\\': 'right-pinky', "'": 'right-pinky',
     
-    // Space bar - both thumbs
+    // Space bar - right thumb
     ' ': 'both-thumbs'
   };
   
@@ -209,23 +209,23 @@ const fingerColors = {
         {/* Left Hand */}
         <div className="flex flex-col items-center space-y-2">
           <div className={`border-2 rounded-lg p-4 w-32 h-40 flex items-center justify-center transition-all relative ${
-            currentFinger.startsWith('left') ? 'bg-green-200 border-green-400' : 'bg-red-50 border-red-200'
+            currentFinger.startsWith('left') || currentFinger === 'both-thumbs' ? 'bg-green-200 border-green-400' : 'bg-red-50 border-red-200'
           }`}>
             <div className="relative">
               <img 
                 src="/src/assets/left.png" 
                 alt="Left Hand" 
                 className={`w-24 h-32 object-contain transition-all ${
-                  currentFinger.startsWith('left') ? 'brightness-110 saturate-150' : 'opacity-80'
+                  currentFinger.startsWith('left') || currentFinger === 'both-thumbs' ? 'brightness-110 saturate-150' : 'opacity-80'
                 }`}
               />
               {/* Finger highlighting overlay */}
-              {currentFinger.startsWith('left') && (
+              {(currentFinger.startsWith('left') || currentFinger === 'both-thumbs') && (
                 <div
-                  className="absolute bg-green-500 rounded-full animate-pulse shadow-lg"
+                  className="absolute bg-red-500 rounded-full animate-pulse shadow-lg"
                   style={{
-                    left: `${getFingerPosition(currentFinger)?.left || 0}px`,
-                    top: `${getFingerPosition(currentFinger)?.top || 0}px`,
+                    left: `${getFingerPosition(currentFinger === 'both-thumbs' ? 'left-thumb' : currentFinger)?.left || 0}px`,
+                    top: `${getFingerPosition(currentFinger === 'both-thumbs' ? 'left-thumb' : currentFinger)?.top || 0}px`,
                     width: '16px',
                     height: '16px',
                   }}
@@ -248,23 +248,23 @@ const fingerColors = {
         {/* Right Hand */}
         <div className="flex flex-col items-center space-y-2">
           <div className={`border-2 rounded-lg p-4 w-32 h-40 flex items-center justify-center transition-all relative ${
-            currentFinger.startsWith('right') ? 'bg-green-200 border-green-400' : 'bg-blue-50 border-blue-200'
+            currentFinger.startsWith('right') || currentFinger === 'both-thumbs' ? 'bg-green-200 border-green-400' : 'bg-blue-50 border-blue-200'
           }`}>
             <div className="relative">
               <img 
                 src="/src/assets/right.png" 
                 alt="Right Hand" 
                 className={`w-24 h-32 object-contain transition-all ${
-                  currentFinger.startsWith('right') ? 'brightness-110 saturate-150' : 'opacity-80'
+                  currentFinger.startsWith('right') || currentFinger === 'both-thumbs' ? 'brightness-110 saturate-150' : 'opacity-80'
                 }`}
               />
               {/* Finger highlighting overlay for right hand */}
-              {currentFinger.startsWith('right') && (
+              {(currentFinger.startsWith('right') || currentFinger === 'both-thumbs') && (
                 <div
-                  className="absolute bg-green-500 rounded-full animate-pulse shadow-lg"
+                  className="absolute bg-red-500 rounded-full animate-pulse shadow-lg"
                   style={{
-                    left: `${getFingerPosition(currentFinger)?.left || 0}px`,
-                    top: `${getFingerPosition(currentFinger)?.top || 0}px`,
+                    left: `${getFingerPosition(currentFinger === 'both-thumbs' ? 'right-thumb' : currentFinger)?.left || 0}px`,
+                    top: `${getFingerPosition(currentFinger === 'both-thumbs' ? 'right-thumb' : currentFinger)?.top || 0}px`,
                     width: '16px',
                     height: '16px',
                   }}
@@ -281,8 +281,10 @@ const fingerColors = {
         <div className="mt-4 text-center">
           <div className="inline-flex items-center space-x-2 bg-blue-100 px-4 py-2 rounded-lg">
             <span className="text-sm font-medium text-blue-800">
-              Use your {currentFinger.replace('-', ' ').replace('left', 'left hand').replace('right', 'right hand')} 
-              {currentChar === ' ' ? ' for SPACE' : ` to type "${currentChar}"`}
+              {currentFinger === 'both-thumbs' 
+                ? 'Use either thumb for SPACE'
+                : `Use your ${currentFinger.replace('-', ' ').replace('left', 'left hand').replace('right', 'right hand')} to type "${currentChar}"`
+              }
             </span>
           </div>
         </div>
