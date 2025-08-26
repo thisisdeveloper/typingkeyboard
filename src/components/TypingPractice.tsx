@@ -210,7 +210,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
       </div>
 
       {/* Typing Area */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20">
         {lessonStatus.attempts > 0 && (
           <div className="mb-6 text-sm text-gray-600 space-x-4">
             <span>Previous Best: {lessonStatus.bestWpm} WPM</span>
