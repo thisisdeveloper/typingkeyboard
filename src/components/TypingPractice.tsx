@@ -188,34 +188,27 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
 
   return (
     <div ref={containerRef} className="space-y-6 outline-none" tabIndex={0}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-white/50 rounded-lg transition-all"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Levels</span>
-        </button>
-
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={resetPractice}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all"
-          >
-            <RotateCcw className="h-4 w-4" />
-            <span>Reset</span>
-          </button>
-        </div>
-      </div>
-
       {/* Typing Area */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20">
         {lessonStatus.attempts > 0 && (
-          <div className="mb-6 text-sm text-gray-600 space-x-4">
-            <span>Previous Best: {lessonStatus.bestWpm} WPM</span>
-            <span>{lessonStatus.bestAccuracy}% Accuracy</span>
-            <span>{lessonStatus.attempts} attempts</span>
+          <div className={`mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 transition-all duration-500 ${
+            startTime ? 'opacity-0 max-h-0 overflow-hidden mb-0 p-0' : 'opacity-100 max-h-20'
+          }`}>
+            <div className="text-sm text-blue-800 font-medium mb-2">Previous Best Performance</div>
+            <div className="flex items-center space-x-6 text-sm text-blue-700">
+              <span className="flex items-center space-x-1">
+                <Zap className="h-4 w-4" />
+                <span>{lessonStatus.bestWpm} WPM</span>
+              </span>
+              <span className="flex items-center space-x-1">
+                <Target className="h-4 w-4" />
+                <span>{lessonStatus.bestAccuracy}% Accuracy</span>
+              </span>
+              <span className="flex items-center space-x-1">
+                <Clock className="h-4 w-4" />
+                <span>{lessonStatus.attempts} attempts</span>
+              </span>
+            </div>
           </div>
         )}
 
@@ -239,7 +232,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
         </div>
 
         {/* Stats Display */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-6 py-1 mb-4">
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-6 py-3 mb-4">
           <div className="flex items-center space-x-2">
             <Zap className="h-4 w-4 text-blue-600" />
             <span className="text-xs text-gray-500">Speed:</span>
@@ -262,6 +255,13 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
                startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
             </span>
           </div>
+          <button
+            onClick={resetPractice}
+            className="flex items-center space-x-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all text-xs"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset</span>
+          </button>
         </div>
 
         {/* Typed Text Display */}
