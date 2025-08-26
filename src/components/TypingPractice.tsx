@@ -199,39 +199,6 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
         </button>
 
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-6 bg-white/60 backdrop-blur-sm rounded-lg px-4 py-2">
-            <div className="flex items-center space-x-2">
-              <Zap className="h-4 w-4 text-blue-600" />
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Speed</div>
-                <div className="text-sm font-medium">{wpm} WPM</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Progress</div>
-                <div className="text-sm font-medium">{Math.round((userInput.length / text.length) * 100)}%</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Target className="h-4 w-4 text-green-600" />
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Accuracy</div>
-                <div className="text-sm font-medium">{accuracy}%</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-purple-600" />
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Time</div>
-                <div className="text-sm font-medium">
-                  {isCompleted && finalTime ? Math.round(finalTime) : 
-                   startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
-                </div>
-              </div>
-            </div>
-          </div>
-
           <button
             onClick={resetPractice}
             className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all"
@@ -269,6 +236,32 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
               {char}
             </span>
           ))}
+        </div>
+
+        {/* Stats Display */}
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-6 py-1 mb-4">
+          <div className="flex items-center space-x-2">
+            <Zap className="h-4 w-4 text-blue-600" />
+            <span className="text-xs text-gray-500">Speed:</span>
+            <span className="text-xs font-medium">{wpm} WPM</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">Progress:</span>
+            <span className="text-xs font-medium">{Math.round((userInput.length / text.length) * 100)}%</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Target className="h-4 w-4 text-green-600" />
+            <span className="text-xs text-gray-500">Accuracy:</span>
+            <span className="text-xs font-medium">{accuracy}%</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Clock className="h-4 w-4 text-purple-600" />
+            <span className="text-xs text-gray-500">Time:</span>
+            <span className="text-xs font-medium">
+              {isCompleted && finalTime ? Math.round(finalTime) : 
+               startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
+            </span>
+          </div>
         </div>
 
         {/* Typed Text Display */}
