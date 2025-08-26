@@ -80,6 +80,8 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [finalTime, setFinalTime] = useState<number | null>(null);
+  const [selectedTimeout, setSelectedTimeout] = useState<number | null>(null);
+  const [timeoutReached, setTimeoutReached] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -88,9 +90,33 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
     }
   }, []);
 
+  // Timeout effect
+  useEffect(() => {
+    if (selectedTimeout && startTime && !isCompleted && !timeoutReached) {
+      const timeoutId = setTimeout(() => {
+        setTimeoutReached(true);
+        setIsCompleted(true);
+        const completionTime = selectedTimeout;
+        setFinalTime(completionTime);
+        const finalWpm = Math.round((userInput.length / 5) / (completionTime / 60));
+        const finalAccuracy = Math.round(((userInput.length - errors.length) / userInput.length) * 100) || 0;
+        
+        setWpm(finalWpm);
+        setAccuracy(finalAccuracy);
+        
+        onStatsUpdate(level, lesson, {
+          wpm: finalWpm,
+          accuracy: finalAccuracy,
+          time: completionTime,
+        });
+      }, selectedTimeout * 1000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedTimeout, startTime, isCompleted, timeoutReached, userInput.length, errors.length, onStatsUpdate, level, lesson]);
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (isCompleted) return;
+      if (isCompleted || timeoutReached) return;
       
       // Prevent default behavior for certain keys
       if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab') {
@@ -122,13 +148,13 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [userInput, text.length, isCompleted]);
+  }, [userInput, text.length, isCompleted, timeoutReached]);
   useEffect(() => {
     if (userInput.length === 1 && !startTime) {
       setStartTime(Date.now());
     }
 
-    if (userInput.length <= text.length && !isCompleted) {
+    if (userInput.length <= text.length && !isCompleted && !timeoutReached) {
       const newErrors: number[] = [];
       for (let i = 0; i < userInput.length; i++) {
         if (userInput[i] !== text[i]) {
@@ -138,7 +164,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
       setErrors(newErrors);
 
       // Calculate real-time stats
-      if (startTime && userInput.length > 0 && !isCompleted) {
+      if (startTime && userInput.length > 0 && !isCompleted && !timeoutReached) {
         const timeElapsed = (Date.now() - startTime) / 1000 / 60; // in minutes
         const wordsTyped = userInput.length / 5; // assuming 5 characters per word
         const currentWpm = Math.round(wordsTyped / timeElapsed);
@@ -148,7 +174,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
         setAccuracy(isNaN(currentAccuracy) ? 100 : currentAccuracy);
       }
 
-      if (userInput === text) {
+      if (userInput === text && !timeoutReached) {
         setIsCompleted(true);
         const completionTime = startTime ? (Date.now() - startTime) / 1000 : 0;
         setFinalTime(completionTime);
@@ -165,7 +191,7 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
         });
       }
     }
-  }, [userInput, text, startTime, errors.length, isCompleted, onStatsUpdate, level, lesson]);
+  }, [userInput, text, startTime, errors.length, isCompleted, timeoutReached, onStatsUpdate, level, lesson]);
 
 
   const resetPractice = () => {
@@ -174,16 +200,46 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
     setErrors([]);
     setStartTime(null);
     setIsCompleted(false);
+    setTimeoutReached(false);
     setFinalTime(null);
     setWpm(0);
     setAccuracy(100);
+    setSelectedTimeout(null);
     if (containerRef.current) {
       containerRef.current.focus();
     }
   };
 
+  const handleTimeoutSelect = (minutes: number) => {
+    const seconds = minutes * 60;
+    setSelectedTimeout(seconds);
+    setTimeoutReached(false);
+  };
+
   const getCurrentChar = () => {
     return currentIndex < text.length ? text[currentIndex] : '';
+  };
+
+  const getRemainingTime = () => {
+    if (!selectedTimeout || !startTime || isCompleted || timeoutReached) return null;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remaining = Math.max(0, selectedTimeout - elapsed);
+    return Math.ceil(remaining);
+  };
+
+  const remainingTime = getRemainingTime();
+
+  const getRecommendedPracticeTime = () => {
+    switch (level) {
+      case 'beginner':
+        return '5-10 minutes recommended for beginners';
+      case 'intermediate':
+        return '10-15 minutes recommended for intermediate';
+      case 'advanced':
+        return '15-40 minutes recommended for advanced';
+      default:
+        return '';
+    }
   };
 
   return (
@@ -231,45 +287,110 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({
           ))}
         </div>
 
-        {/* Stats Display */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-6 py-3 mb-4">
-          <div className="flex items-center space-x-2">
-            <Zap className="h-4 w-4 text-blue-600" />
-            <span className="text-xs text-gray-500">Speed:</span>
-            <span className="text-xs font-medium">{wpm} WPM</span>
+        {/* Stats Display - Split into two parts */}
+        <div className="flex bg-gray-50 rounded-lg mb-4 overflow-hidden">
+          {/* Left side - 75% width - Stats */}
+          <div className="flex-1 px-6 py-3" style={{ width: '75%' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Zap className="h-4 w-4 text-blue-600" />
+                <span className="text-xs text-gray-500">Speed:</span>
+                <span className="text-xs font-medium">{wpm} WPM</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-500">Progress:</span>
+                <span className="text-xs font-medium">{Math.round((userInput.length / text.length) * 100)}%</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Target className="h-4 w-4 text-green-600" />
+                <span className="text-xs text-gray-500">Accuracy:</span>
+                <span className="text-xs font-medium">{accuracy}%</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-purple-600" />
+                <span className="text-xs text-gray-500">Time:</span>
+                <span className="text-xs font-medium">
+                  {isCompleted && finalTime ? Math.round(finalTime) : 
+                   startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">Progress:</span>
-            <span className="text-xs font-medium">{Math.round((userInput.length / text.length) * 100)}%</span>
+          
+          {/* Right side - 25% width - Timeout controls */}
+          <div className="border-l border-gray-200 px-4 py-3" style={{ width: '25%' }}>
+            <div className="flex items-center justify-between space-x-2">
+              {/* Timeout buttons */}
+              <div className="flex space-x-1">
+                {[5, 10, 15, 40, 60].map((minutes) => (
+                  <button
+                    key={minutes}
+                    onClick={() => handleTimeoutSelect(minutes)}
+                    disabled={startTime !== null}
+                    className={`px-2 py-1 text-xs rounded transition-all ${
+                      selectedTimeout === minutes * 60
+                        ? 'bg-orange-500 text-white'
+                        : startTime
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                    }`}
+                  >
+                    {minutes >= 60 ? `${minutes/60}H` : `${minutes}M`}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Reset button */}
+              <button
+                onClick={resetPractice}
+                className="flex items-center space-x-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-all text-xs"
+              >
+                <RotateCcw className="h-3 w-3" />
+                <span>Reset</span>
+              </button>
+            </div>
+            
+            {/* Remaining time display */}
+            {selectedTimeout && remainingTime !== null && (
+              <div className="mt-2 text-center">
+                <div className={`text-xs font-medium ${
+                  remainingTime <= 30 ? 'text-red-600' : 
+                  remainingTime <= 60 ? 'text-orange-600' : 'text-gray-600'
+                }`}>
+                  {remainingTime >= 3600 
+                    ? `${Math.floor(remainingTime / 3600)}:${Math.floor((remainingTime % 3600) / 60).toString().padStart(2, '0')}:${(remainingTime % 60).toString().padStart(2, '0')} left`
+                    : `${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} left`
+                  }
+                </div>
+              </div>
+            )}
+            
+            {/* Level-based practice time recommendation */}
+            {!startTime && (
+              <div className="mt-2 text-center">
+                <div className="text-xs text-gray-500">
+                  {getRecommendedPracticeTime()}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex items-center space-x-2">
-            <Target className="h-4 w-4 text-green-600" />
-            <span className="text-xs text-gray-500">Accuracy:</span>
-            <span className="text-xs font-medium">{accuracy}%</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Clock className="h-4 w-4 text-purple-600" />
-            <span className="text-xs text-gray-500">Time:</span>
-            <span className="text-xs font-medium">
-              {isCompleted && finalTime ? Math.round(finalTime) : 
-               startTime && !isCompleted ? Math.round((Date.now() - startTime) / 1000) : 0}s
-            </span>
-          </div>
-          <button
-            onClick={resetPractice}
-            className="flex items-center space-x-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all text-xs"
-          >
-            <RotateCcw className="h-3 w-3" />
-            <span>Reset</span>
-          </button>
         </div>
 
         {/* Typed Text Display */}
-        {isCompleted && (
+        {(isCompleted || timeoutReached) && (
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <h4 className="font-semibold text-green-900 mb-2">🎉 Lesson Completed!</h4>
+            <h4 className="font-semibold text-green-900 mb-2">
+              {timeoutReached ? '⏰ Time\'s Up!' : '🎉 Lesson Completed!'}
+            </h4>
             <p className="text-green-700">
-              Great job! You typed at {wpm} WPM with {accuracy}% accuracy.
+              {timeoutReached 
+                ? `Time's up! You typed at ${wpm} WPM with ${accuracy}% accuracy in ${
+                    selectedTimeout && selectedTimeout >= 3600 
+                      ? `${selectedTimeout / 3600} hour${selectedTimeout > 3600 ? 's' : ''}`
+                      : `${selectedTimeout ? selectedTimeout / 60 : 0} minutes`
+                  }.`
+                : `Great job! You typed at ${wpm} WPM with ${accuracy}% accuracy.`
+              }
               {lessonStatus.bestWpm > 0 && wpm > lessonStatus.bestWpm && (
                 <span className="block mt-1 font-medium">🚀 New personal best WPM!</span>
               )}
