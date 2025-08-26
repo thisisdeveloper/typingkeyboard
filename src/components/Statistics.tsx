@@ -1,9 +1,15 @@
 import React from 'react';
 import { TrendingUp, Target, Clock, Trophy, BarChart3, Award } from 'lucide-react';
-import { TypingStats } from '../App';
 
 interface StatisticsProps {
-  stats: TypingStats;
+  stats: {
+    wpm: number;
+    accuracy: number;
+    completedLessons: number;
+    totalTime: number;
+    bestWpm: number;
+    bestAccuracy: number;
+  };
 }
 
 const Statistics: React.FC<StatisticsProps> = ({ stats }) => {

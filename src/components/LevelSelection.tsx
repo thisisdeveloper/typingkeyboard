@@ -1,8 +1,10 @@
 import React from 'react';
-import { Play, Star, Award, Zap } from 'lucide-react';
+import { Play, Star, Award, Zap, CheckCircle, Clock } from 'lucide-react';
+import { UserProgress } from '../utils/storage';
 
 interface LevelSelectionProps {
   onLevelSelect: (level: 'beginner' | 'intermediate' | 'advanced', lesson: number) => void;
+  progress: UserProgress;
 }
 
 const levels = {
@@ -47,7 +49,11 @@ const levels = {
   }
 };
 
-const LevelSelection: React.FC<LevelSelectionProps> = ({ onLevelSelect }) => {
+const LevelSelection: React.FC<LevelSelectionProps> = ({ onLevelSelect, progress }) => {
+  const getLessonStatus = (level: string, lessonIndex: number) => {
+    return progress.lessonProgress[level]?.[lessonIndex];
+  };
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -74,21 +80,61 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({ onLevelSelect }) => {
               </div>
 
               <div className="space-y-3">
-                {level.lessons.map((lesson, index) => (
-                  <button
+                {level.lessons.map((lesson, index) => {
+                  const lessonStatus = getLessonStatus(levelKey, index);
+                  const isCompleted = lessonStatus?.completed || false;
+                  const hasAttempts = lessonStatus?.attempts > 0;
+                  
+                  return (
+                    <button
                     key={index}
                     onClick={() => onLevelSelect(levelKey, index)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg border border-${level.color}-200 hover:bg-${level.color}-50 transition-all group`}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all group ${
+                      isCompleted 
+                        ? `border-green-300 bg-green-50 hover:bg-green-100`
+                        : hasAttempts
+                        ? `border-yellow-300 bg-yellow-50 hover:bg-yellow-100`
+                        : `border-${level.color}-200 hover:bg-${level.color}-50`
+                    }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-6 h-6 rounded-full bg-${level.color}-100 flex items-center justify-center text-xs font-medium text-${level.color}-600`}>
-                        {index + 1}
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        isCompleted 
+                          ? 'bg-green-100 text-green-600'
+                          : hasAttempts
+                          ? 'bg-yellow-100 text-yellow-600'
+                          : `bg-${level.color}-100 text-${level.color}-600`
+                      }`}>
+                        {isCompleted ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          index + 1
+                        )}
                       </div>
-                      <span className="text-sm text-gray-700 text-left">{lesson}</span>
+                      <div className="flex-1 text-left">
+                        <span className="text-sm text-gray-700">{lesson}</span>
+                        {lessonStatus && (
+                          <div className="text-xs text-gray-500 mt-1 flex items-center space-x-3">
+                            <span>Best: {lessonStatus.bestWpm} WPM</span>
+                            <span>{lessonStatus.bestAccuracy}% Acc</span>
+                            <span className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{lessonStatus.attempts} attempts</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <Play className={`h-4 w-4 text-${level.color}-400 group-hover:text-${level.color}-600 transition-colors`} />
+                    <Play className={`h-4 w-4 transition-colors ${
+                      isCompleted 
+                        ? 'text-green-400 group-hover:text-green-600'
+                        : hasAttempts
+                        ? 'text-yellow-400 group-hover:text-yellow-600'
+                        : `text-${level.color}-400 group-hover:text-${level.color}-600`
+                    }`} />
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

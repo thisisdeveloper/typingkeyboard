@@ -1,30 +1,19 @@
 import React, { useState } from 'react';
-import { Keyboard, Trophy, Clock, Target, BarChart3, Home } from 'lucide-react';
+import { Keyboard, Trophy, Clock, Target, BarChart3, Home, Database } from 'lucide-react';
 import LevelSelection from './components/LevelSelection';
 import TypingPractice from './components/TypingPractice';
 import Statistics from './components/Statistics';
-
-export interface TypingStats {
-  wpm: number;
-  accuracy: number;
-  completedLessons: number;
-  totalTime: number;
-  bestWpm: number;
-  bestAccuracy: number;
-}
+import ProgressDashboard from './components/ProgressDashboard';
+import AchievementNotification from './components/AchievementNotification';
+import { useProgress } from './hooks/useProgress';
+import { UserProgress } from './utils/storage';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'practice' | 'stats'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'practice' | 'stats' | 'progress'>('home');
   const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced' | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<number>(0);
-  const [stats, setStats] = useState<TypingStats>({
-    wpm: 0,
-    accuracy: 0,
-    completedLessons: 0,
-    totalTime: 0,
-    bestWpm: 0,
-    bestAccuracy: 0,
-  });
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
+  const { progress, updateProgress, resetProgress, getLessonStatus, getNewAchievements } = useProgress();
 
   const handleLevelSelect = (level: 'beginner' | 'intermediate' | 'advanced', lesson: number) => {
     setSelectedLevel(level);
@@ -37,13 +26,23 @@ function App() {
     setSelectedLevel(null);
   };
 
-  const updateStats = (newStats: Partial<TypingStats>) => {
-    setStats(prev => ({
-      ...prev,
-      ...newStats,
-      bestWpm: Math.max(prev.bestWpm, newStats.wpm || 0),
-      bestAccuracy: Math.max(prev.bestAccuracy, newStats.accuracy || 0),
-    }));
+  const handleStatsUpdate = (level: string, lesson: number, stats: { wpm: number; accuracy: number; time: number }) => {
+    const oldProgress = { ...progress };
+    updateProgress(level, lesson, stats);
+    
+    // Check for new achievements
+    setTimeout(() => {
+      // Reload progress to get the latest state
+      const currentProgress = { ...progress };
+      const achievements = getNewAchievements(oldProgress, currentProgress);
+      if (achievements.length > 0) {
+        setNewAchievements(achievements);
+      }
+    }, 200);
+  };
+
+  const handleCloseAchievements = () => {
+    setNewAchievements([]);
   };
 
   return (
@@ -85,6 +84,18 @@ function App() {
                 <BarChart3 className="h-4 w-4" />
                 <span>Statistics</span>
               </button>
+              
+              <button
+                onClick={() => setCurrentView('progress')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                  currentView === 'progress'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
+              >
+                <Database className="h-4 w-4" />
+                <span>Progress</span>
+              </button>
             </nav>
           </div>
         </div>
@@ -114,7 +125,7 @@ function App() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Best WPM</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.bestWpm}</p>
+                    <p className="text-2xl font-bold text-gray-900">{progress.stats.bestWpm}</p>
                   </div>
                 </div>
               </div>
@@ -126,7 +137,7 @@ function App() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Best Accuracy</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.bestAccuracy}%</p>
+                    <p className="text-2xl font-bold text-gray-900">{progress.stats.bestAccuracy}%</p>
                   </div>
                 </div>
               </div>
@@ -138,7 +149,7 @@ function App() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Completed</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.completedLessons}</p>
+                    <p className="text-2xl font-bold text-gray-900">{progress.stats.completedLessons}</p>
                   </div>
                 </div>
               </div>
@@ -150,13 +161,13 @@ function App() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Time</p>
-                    <p className="text-2xl font-bold text-gray-900">{Math.round(stats.totalTime / 60)}m</p>
+                    <p className="text-2xl font-bold text-gray-900">{Math.round(progress.stats.totalTime / 60)}m</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <LevelSelection onLevelSelect={handleLevelSelect} />
+            <LevelSelection onLevelSelect={handleLevelSelect} progress={progress} />
           </div>
         )}
 
@@ -165,14 +176,25 @@ function App() {
             level={selectedLevel}
             lesson={selectedLesson}
             onBack={handleBackToHome}
-            onStatsUpdate={updateStats}
+            onStatsUpdate={handleStatsUpdate}
+            lessonStatus={getLessonStatus(selectedLevel, selectedLesson)}
           />
         )}
 
         {currentView === 'stats' && (
-          <Statistics stats={stats} />
+          <Statistics stats={progress.stats} />
+        )}
+
+        {currentView === 'progress' && (
+          <ProgressDashboard progress={progress} />
         )}
       </main>
+      
+      {/* Achievement Notifications */}
+      <AchievementNotification 
+        achievements={newAchievements}
+        onClose={handleCloseAchievements}
+      />
     </div>
   );
 }

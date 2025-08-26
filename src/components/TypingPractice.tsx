@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, RotateCcw, Clock, Target, Zap } from 'lucide-react';
 import VirtualKeyboard from './VirtualKeyboard';
-import { TypingStats } from '../App';
 
 interface TypingPracticeProps {
   level: 'beginner' | 'intermediate' | 'advanced';
   lesson: number;
   onBack: () => void;
-  onStatsUpdate: (stats: Partial<TypingStats>) => void;
+  onStatsUpdate: (level: string, lesson: number, stats: { wpm: number; accuracy: number; time: number }) => void;
+  lessonStatus: {
+    completed: boolean;
+    bestWpm: number;
+    bestAccuracy: number;
+    attempts: number;
+    totalTime: number;
+    lastAttempt: string;
+  };
 }
 
 const lessonTexts = {
@@ -56,7 +63,14 @@ const playBeepSound = () => {
     console.log('Beep sound not supported');
   }
 };
-const TypingPractice: React.FC<TypingPracticeProps> = ({ level, lesson, onBack, onStatsUpdate }) => {
+
+const TypingPractice: React.FC<TypingPracticeProps> = ({ 
+  level, 
+  lesson, 
+  onBack, 
+  onStatsUpdate, 
+  lessonStatus 
+}) => {
   const [text] = useState(lessonTexts[level][lesson]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState('');
@@ -144,15 +158,14 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({ level, lesson, onBack, 
         setWpm(finalWpm);
         setAccuracy(finalAccuracy);
         
-        onStatsUpdate({
+        onStatsUpdate(level, lesson, {
           wpm: finalWpm,
           accuracy: finalAccuracy,
-          completedLessons: 1,
-          totalTime: completionTime,
+          time: completionTime,
         });
       }
     }
-  }, [userInput, text, startTime, errors.length, isCompleted, onStatsUpdate]);
+  }, [userInput, text, startTime, errors.length, isCompleted, onStatsUpdate, level, lesson]);
 
 
   const resetPractice = () => {
@@ -223,6 +236,13 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({ level, lesson, onBack, 
           <h3 className="text-lg font-semibold text-gray-900 mb-2 capitalize">
             {level} - Lesson {lesson + 1}
           </h3>
+          {lessonStatus.attempts > 0 && (
+            <div className="text-sm text-gray-600 space-x-4">
+              <span>Previous Best: {lessonStatus.bestWpm} WPM</span>
+              <span>{lessonStatus.bestAccuracy}% Accuracy</span>
+              <span>{lessonStatus.attempts} attempts</span>
+            </div>
+          )}
         </div>
 
         <div className="text-2xl leading-relaxed font-mono bg-gray-50 p-6 rounded-xl mb-4 border">
@@ -250,6 +270,12 @@ const TypingPractice: React.FC<TypingPracticeProps> = ({ level, lesson, onBack, 
             <h4 className="font-semibold text-green-900 mb-2">🎉 Lesson Completed!</h4>
             <p className="text-green-700">
               Great job! You typed at {wpm} WPM with {accuracy}% accuracy.
+              {lessonStatus.bestWpm > 0 && wpm > lessonStatus.bestWpm && (
+                <span className="block mt-1 font-medium">🚀 New personal best WPM!</span>
+              )}
+              {lessonStatus.bestAccuracy > 0 && accuracy > lessonStatus.bestAccuracy && (
+                <span className="block mt-1 font-medium">🎯 New personal best accuracy!</span>
+              )}
             </p>
           </div>
         )}
